@@ -8,3 +8,11 @@ wheels/
 
 # Virtual environments
 .venv
+
+.env
+
+gitignore
+
+credentials.json
+
+token.json
