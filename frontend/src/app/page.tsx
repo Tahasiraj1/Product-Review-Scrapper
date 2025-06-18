@@ -7,51 +7,74 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
+interface Review {
+  product_name: string;
+  review_text: string;
+  rating: number;
+  sentiment: 'positive' | 'neutral' | 'negative';
+}
 
 export default function Home() {
-  const [reviews, setReviews] = useState([]);
-  const [url, setUrl] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [url, setUrl] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleScrape = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const response = await fetch('http://127.0.0.1:8000/scrape', {
+      const response = await fetch('/api/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url })
+        body: JSON.stringify({ url }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to fetch reviews');
+      }
+
       const data = await response.json();
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid response: Expected an array of reviews');
+      }
+
       setReviews(data);
-    } catch (error) {
-      console.error('Error:', error);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(errorMessage);
+      console.error('Error:', err);
+      setReviews([]); // Reset reviews on error
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  type Sentiment = 'positive' | 'neutral' | 'negative';
-  type Review = { sentiment: Sentiment; };
-  
-  const sentimentCounts = reviews.reduce<Record<Sentiment, number>>((acc, review: Review) => {
-    acc[review.sentiment] = (acc[review.sentiment] || 0) + 1;
-    return acc;
-  }, {
-    positive: 0,
-    neutral: 0,
-    negative: 0
-  });
+  // Calculate sentiment counts safely
+  const sentimentCounts = Array.isArray(reviews)
+    ? reviews.reduce<Record<'positive' | 'neutral' | 'negative', number>>(
+        (acc, review) => {
+          acc[review.sentiment] = (acc[review.sentiment] || 0) + 1;
+          return acc;
+        },
+        { positive: 0, neutral: 0, negative: 0 }
+      )
+    : { positive: 0, neutral: 0, negative: 0 };
 
   const chartData = {
     labels: ['Positive', 'Neutral', 'Negative'],
-    datasets: [{
-      label: 'Sentiment Distribution',
-      data: [
-        sentimentCounts.positive || 0,
-        sentimentCounts.neutral || 0,
-        sentimentCounts.negative || 0
-      ],
-      backgroundColor: ['#4CAF50', '#FFC107', '#F44336']
-    }]
+    datasets: [
+      {
+        label: 'Sentiment Distribution',
+        data: [
+          sentimentCounts.positive,
+          sentimentCounts.neutral,
+          sentimentCounts.negative,
+        ],
+        backgroundColor: ['#4CAF50', '#FFC107', '#F44336'],
+      },
+    ],
   };
 
   return (
@@ -63,16 +86,17 @@ export default function Home() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="Enter Daraz product URL"
-          className="border p-2 mr-2"
+          className="border p-2 mr-2 w-64"
         />
         <button
           onClick={handleScrape}
           disabled={loading}
-          className="bg-blue-500 text-white p-2 rounded"
+          className="bg-blue-500 text-white p-2 rounded disabled:bg-gray-400"
         >
           {loading ? 'Scraping...' : 'Scrape Reviews'}
         </button>
       </div>
+      {error && <p className="text-red-500 mb-4">{error}</p>}
       <ReviewTable reviews={reviews} />
       {reviews.length > 0 && (
         <div className="mt-8">

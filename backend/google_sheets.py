@@ -1,12 +1,10 @@
 from typing import List
 from ReviewModel import Review
 import gspread
-from auth import authenticate
 
-@authenticate
-def save_to_google_sheets(reviews: List[Review], creds=None):
+def save_to_google_sheets(reviews: List[Review]):
     try:
-        client = gspread.authorize(creds)
+        client = gspread.service_account(filename='credentials.json')
 
         sheet = client.open("Product Reviews").sheet1
         sheet.clear()
