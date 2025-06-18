@@ -10,7 +10,7 @@ This is a web scrapper that scrapes the product reviews from the website of the 
 - Run the fastapi server using 'fastapi dev main.py'
 
 
-- Go to the frontend folder and run 'npm install' and 'npm run dev'
-- run 'npm run dev' in the frontend folder
+- Go to the frontend folder and run 'npm install'
+- Run 'npm run dev' in the frontend folder
 - open localhost:3000 in your browser
 - enter the url of the product you want to scrape from 'daraz.pk'
