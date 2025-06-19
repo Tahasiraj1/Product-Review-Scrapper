@@ -1,9 +1,7 @@
 from playwright.async_api import async_playwright
 import asyncio
-from processor import process_reviews
-from google_sheets import save_to_google_sheets
 
-async def scrape_reviews(url, num_reviews_to_extract=50):
+async def scrape_reviews(url, num_reviews_to_extract: int):
     reviews_data = []
 
     async with async_playwright() as p:
@@ -12,7 +10,7 @@ async def scrape_reviews(url, num_reviews_to_extract=50):
 
         try:
             # Navigate to the product page
-            await page.goto(url, wait_until="networkidle")
+            await page.goto(url, wait_until="networkidle", timeout=40000)
             print(f"Navigated to {url}")
 
             # Wait for product title
@@ -90,13 +88,4 @@ async def scrape_reviews(url, num_reviews_to_extract=50):
             await browser.close()
 
     return reviews_data
-
-if __name__ == '__main__':
-    import asyncio
-    # Use the Daraz URL you provided
-    product_url = 'https://www.daraz.pk/products/p47-i166492518-s1815011596.html'
-    reviews = asyncio.run(scrape_reviews(product_url, num_reviews_to_extract=50))
-    processed_reviews = process_reviews(reviews)
-    print(f"\n--- Collected {len(processed_reviews)} Reviews ---\n\n")
-    save_to_google_sheets(processed_reviews)
     

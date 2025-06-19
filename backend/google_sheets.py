@@ -1,5 +1,5 @@
-from typing import List
 from ReviewModel import Review
+from typing import List
 import gspread
 
 def save_to_google_sheets(reviews: List[Review]):

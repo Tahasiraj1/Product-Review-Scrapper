@@ -1,7 +1,7 @@
 from analyzer import analyze_sentiment
 from ReviewModel import Review
-import re
 from typing import List, Dict
+import re
 
 def clean_text(text: str) -> str:
     text = re.sub(r'[^\w\s]', '', text)
